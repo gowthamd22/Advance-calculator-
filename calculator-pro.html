@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calculator Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12141c;
+    --panel: #1a1d29;
+    --panel-2: #232838;
+    --key: #262b3c;
+    --key-hi: #2e3448;
+    --accent: #7c5cff;
+    --accent-2: #3ddbd9;
+    --warn: #ffb454;
+    --text: #eef0f8;
+    --text-dim: #8890ab;
+    --danger: #ff6b6b;
+    --radius: 16px;
+    --light-x: 30%;
+    --light-y: 20%;
+    --anim: 1;
+  }
+  [data-theme="light"]{
+    --bg: #eef0f6;
+    --panel: #ffffff;
+    --panel-2: #f4f5fb;
+    --key: #ffffff;
+    --key-hi: #eceffb;
+    --text: #1b1e2b;
+    --text-dim: #6b7290;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at var(--light-x) var(--light-y), rgba(124,92,255,0.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 14px;
+    transition:background .4s ease, color .4s ease;
+  }
+  .app{
+    width:100%;
+    max-width:420px;
+    background:var(--panel);
+    border-radius:24px;
+    padding:18px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    position:relative;
+    overflow:hidden;
+  }
+  [data-theme="light"] .app{
+    box-shadow: 0 30px 60px -25px rgba(30,30,60,0.18), 0 0 0 1px rgba(20,20,40,0.04) inset;
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.02em;
+  }
+  .brand .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 0 10px 2px rgba(124,92,255,0.55);
+  }
+  .icon-btn{
+    background:var(--panel-2);
+    border:none;
+    color:var(--text-dim);
+    width:32px;height:32px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .icon-btn:hover{color:var(--text); background:var(--key-hi);}
+  .icon-row{display:flex;gap:6px;}
+
+  .modes{
+    display:flex;
+    background:var(--panel-2);
+    border-radius:12px;
+    padding:3px;
+    margin-bottom:12px;
+    gap:2px;
+  }
+  .mode-btn{
+    flex:1;
+    border:none;background:transparent;
+    color:var(--text-dim);
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:12.5px;
+    padding:8px 0;
+    border-radius:9px;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .mode-btn.active{
+    background:var(--key);
+    color:var(--text);
+    box-shadow:0 4px 14px -4px rgba(124,92,255,0.4), 0 0 0 1px rgba(124,92,255,0.25) inset;
+  }
+
+  .display{
+    background:var(--panel-2);
+    border-radius:16px;
+    padding:18px 16px 14px;
+    margin-bottom:12px;
+    min-height:96px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    gap:4px;
+    position:relative;
+  }
+  .base-row{
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px; color:var(--text-dim);
+    letter-spacing:0.04em;
+  }
+  .expr{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--text-dim);
+    min-height:16px;
+    white-space:nowrap;
+    overflow-x:auto;
+  }
+  .result{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:38px;
+    text-align:right;
+    overflow-x:auto;
+    white-space:nowrap;
+    letter-spacing:-0.01em;
+  }
+  .mem-flag{
+    position:absolute; top:12px; left:16px;
+    font-size:10px; font-weight:600; color:var(--accent-2);
+    letter-spacing:0.08em;
+  }
+
+  .mem-row{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .mem-row button{
+    font-size:11px;
+    padding:7px 0;
+    color:var(--text-dim);
+  }
+
+  .pad{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  .pad.sci{grid-template-columns:repeat(5,1fr);}
+  .pad.prog{grid-template-columns:repeat(4,1fr);}
+
+  button{
+    font-family:'Space Grotesk',sans-serif;
+    cursor:pointer;
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:var(--key);
+    color:var(--text);
+    font-size:16px;
+    font-weight:500;
+    padding:14px 0;
+    position:relative;
+    isolation:isolate;
+    overflow:hidden;
+    transition:transform .08s ease, box-shadow .15s ease, background .15s ease;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 14px -8px rgba(0,0,0,0.5);
+  }
+  [data-theme="light"] button{
+    box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 10px -6px rgba(30,30,60,0.25);
+  }
+  button::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(120px 80px at var(--light-x) var(--light-y), rgba(255,255,255,0.14), transparent 70%);
+    opacity:calc(var(--anim));
+    pointer-events:none;
+  }
+  button:hover{background:var(--key-hi);}
+  button:active{transform:scale(0.95);}
+  .fn{ color:var(--text-dim); font-size:14px; background:var(--panel-2);}
+  .op{ color:var(--accent-2); background:var(--panel-2);}
+  .op.active-op{background:var(--accent-2); color:#0b1220;}
+  .eq{
+    background:linear-gradient(135deg,var(--accent),#5a3fe0);
+    color:#fff;
+    box-shadow:0 10px 22px -8px rgba(124,92,255,0.65);
+  }
+  .zero{grid-column:span 2;}
+  .danger{color:var(--danger);}
+
+  .glow-pulse{ animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 10px 22px -8px rgba(124,92,255,0.65);}
+    50%{ box-shadow:0 10px 30px -6px rgba(124,92,255,0.95);}
+  }
+  [data-reduced-motion="true"] .glow-pulse{ animation:none; }
+  [data-reduced-motion="true"] *{ transition:none !important; animation:none !important; }
+
+  .panel-toggle{
+    display:flex; gap:8px; margin-top:12px;
+  }
+  .panel-toggle button{
+    flex:1; font-size:11.5px; font-weight:500; padding:9px 0;
+    background:var(--panel-2); color:var(--text-dim);
+  }
+  .panel-toggle button.on{ background:var(--key-hi); color:var(--text);}
+
+  .history{
+    max-height:150px; overflow-y:auto;
+    margin-top:10px; display:none;
+    border-top:1px solid rgba(128,128,150,0.15);
+    padding-top:8px;
+  }
+  .history.show{display:block;}
+  .history-item{
+    display:flex; justify-content:space-between;
+    padding:7px 4px; border-radius:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px; color:var(--text-dim);
+    cursor:pointer;
+  }
+  .history-item:hover{background:var(--panel-2); color:var(--text);}
+  .history-empty{ text-align:center; font-size:12px; color:var(--text-dim); padding:14px 0;}
+
+  .settings{
+    display:none; margin-top:10px; padding-top:10px;
+    border-top:1px solid rgba(128,128,150,0.15);
+    font-size:12px; color:var(--text-dim);
+  }
+  .settings.show{display:block;}
+  .settings-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 2px;
+  }
+  .preset-row{display:flex; gap:6px;}
+  .preset-row button{
+    padding:6px 10px; font-size:11px; background:var(--panel-2); color:var(--text-dim);
+  }
+  .preset-row button.on{background:var(--key-hi); color:var(--text);}
+  .theme-row{display:flex; gap:6px;}
+  .theme-row button{padding:6px 10px; font-size:11px; background:var(--panel-2); color:var(--text-dim);}
+  .theme-row button.on{background:var(--key-hi); color:var(--text);}
+  input[type="range"]{width:90px;}
+
+  @media (max-width:360px){
+    .result{font-size:30px;}
+    button{font-size:14px; padding:12px 0;}
+  }
+
+  .sr-only{
+    position:absolute; width:1px;height:1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>Calculator Pro</div>
+    <div class="icon-row">
+      <button class="icon-btn" id="historyBtn" title="History" aria-label="Toggle history">⏱</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Toggle settings">⚙</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle light/dark theme">◐</button>
+    </div>
+  </div>
+
+  <div class="modes" role="tablist" aria-label="Calculator mode">
+    <button class="mode-btn active" data-mode="basic" role="tab" aria-selected="true">Basic</button>
+    <button class="mode-btn" data-mode="sci" role="tab" aria-selected="false">Scientific</button>
+    <button class="mode-btn" data-mode="prog" role="tab" aria-selected="false">Programmer</button>
+  </div>
+
+  <div class="display" id="display">
+    <div class="mem-flag" id="memFlag" style="visibility:hidden;">M</div>
+    <div class="base-row" id="baseRow" style="display:none;">
+      <span id="baseHex">HEX 0</span><span id="baseDec">DEC 0</span>
+    </div>
+    <div class="expr" id="expr" aria-live="polite"></div>
+    <div class="result" id="result" tabindex="0" aria-live="polite">0</div>
+  </div>
+
+  <div class="mem-row" id="memRow">
+    <button data-mem="mc">MC</button>
+    <button data-mem="mr">MR</button>
+    <button data-mem="mplus">M+</button>
+    <button data-mem="mminus">M-</button>
+    <button data-mem="ms">MS</button>
+  </div>
+
+  <div class="pad" id="pad"></div>
+
+  <div class="panel-toggle">
+    <button id="expand" title="Reduced motion toggle for effects">Effects: <span id="effectsLabel">Standard</span></button>
+  </div>
+
+  <div class="history" id="historyPanel"></div>
+
+  <div class="settings" id="settingsPanel">
+    <div class="settings-row">
+      <span>Effects preset</span>
+      <div class="preset-row" id="presetRow">
+        <button data-preset="minimal">Minimal</button>
+        <button data-preset="standard" class="on">Standard</button>
+        <button data-preset="enthusiast">Enthusiast</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span>Theme</span>
+      <div class="theme-row" id="themeRow">
+        <button data-theme-choice="dark" class="on">Dark</button>
+        <button data-theme-choice="light">Light</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span>Reduced motion</span>
+      <input type="checkbox" id="reducedMotion">
+    </div>
+    <div class="settings-row">
+      <span>Precision</span>
+      <input type="range" id="precision" min="2" max="12" value="8">
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const app = document.getElementById('app');
+  const exprEl = document.getElementById('expr');
+  const resultEl = document.getElementById('result');
+  const memFlag = document.getElementById('memFlag');
+  const pad = document.getElementById('pad');
+  const baseRow = document.getElementById('baseRow');
+  const baseHex = document.getElementById('baseHex');
+  const baseDec = document.getElementById('baseDec');
+  const historyPanel = document.getElementById('historyPanel');
+  const settingsPanel = document.getElementById('settingsPanel');
+
+  let state = {
+    mode: 'basic',
+    expr: '',
+    memory: 0,
+    hasMemory: false,
+    angleUnit: 'rad',
+    programBase: 10,
+    history: [],
+    precision: 8
+  };
+
+  // ---------- Layouts ----------
+  const basicKeys = [
+    {l:'C', cls:'fn', act:'clear'}, {l:'( )', cls:'fn', act:'parens'}, {l:'%', cls:'fn', act:'op', v:'%'}, {l:'÷', cls:'op', act:'op', v:'/'},
+    {l:'7', act:'digit'}, {l:'8', act:'digit'}, {l:'9', act:'digit'}, {l:'×', cls:'op', act:'op', v:'*'},
+    {l:'4', act:'digit'}, {l:'5', act:'digit'}, {l:'6', act:'digit'}, {l:'−', cls:'op', act:'op', v:'-'},
+    {l:'1', act:'digit'}, {l:'2', act:'digit'}, {l:'3', act:'digit'}, {l:'+', cls:'op', act:'op', v:'+'},
+    {l:'±', cls:'fn', act:'negate'}, {l:'0', act:'digit'}, {l:'.', act:'digit'}, {l:'=', cls:'eq glow-pulse', act:'equals'}
+  ];
+
+  const sciKeys = [
+    {l:'sin', cls:'fn', act:'fn', v:'sin'}, {l:'cos', cls:'fn', act:'fn', v:'cos'}, {l:'tan', cls:'fn', act:'fn', v:'tan'}, {l:'C', cls:'fn', act:'clear'}, {l:'⌫', cls:'fn', act:'back'},
+    {l:'ln', cls:'fn', act:'fn', v:'ln'}, {l:'log', cls:'fn', act:'fn', v:'log'}, {l:'√', cls:'fn', act:'fn', v:'sqrt'}, {l:'(', act:'char', v:'('}, {l:')', act:'char', v:')'},
+    {l:'xʸ', cls:'fn', act:'op', v:'^'}, {l:'7', act:'digit'}, {l:'8', act:'digit'}, {l:'9', act:'digit'}, {l:'÷', cls:'op', act:'op', v:'/'},
+    {l:'π', cls:'fn', act:'char', v:'pi'}, {l:'4', act:'digit'}, {l:'5', act:'digit'}, {l:'6', act:'digit'}, {l:'×', cls:'op', act:'op', v:'*'},
+    {l:'e', cls:'fn', act:'char', v:'e'}, {l:'1', act:'digit'}, {l:'2', act:'digit'}, {l:'3', act:'digit'}, {l:'−', cls:'op', act:'op', v:'-'},
+    {l:'x!', cls:'fn', act:'fn', v:'fact'}, {l:'±', cls:'fn', act:'negate'}, {l:'0', act:'digit'}, {l:'.', act:'digit'}, {l:'+', cls:'op', act:'op', v:'+'},
+    {l:'RAD', cls:'fn', act:'angle', id:'angleBtn'}, {l:'%', cls:'fn', act:'op', v:'%'}, {l:'ANS', cls:'fn', act:'ans'}, {l:'=', cls:'eq glow-pulse', act:'equals'}
+  ];
+
+  const progKeys = [
+    {l:'HEX', cls:'fn', act:'base', v:16, id:'hexBtn'}, {l:'DEC', cls:'fn op active-op', act:'base', v:10, id:'decBtn'}, {l:'OCT', cls:'fn', act:'base', v:8, id:'octBtn'}, {l:'BIN', cls:'fn', act:'base', v:2, id:'binBtn'},
+    {l:'AND', cls:'fn', act:'bit', v:'and'}, {l:'OR', cls:'fn', act:'bit', v:'or'}, {l:'XOR', cls:'fn', act:'bit', v:'xor'}, {l:'NOT', cls:'fn', act:'bit', v:'not'},
+    {l:'A', act:'digit', hexonly:true}, {l:'B', act:'digit', hexonly:true}, {l:'C', cls:'fn', act:'clear'}, {l:'⌫', cls:'fn', act:'back'},
+    {l:'D', act:'digit', hexonly:true}, {l:'E', act:'digit', hexonly:true}, {l:'F', act:'digit', hexonly:true}, {l:'÷', cls:'op', act:'op', v:'/'},
+    {l:'7', act:'digit'}, {l:'8', act:'digit'}, {l:'9', act:'digit'}, {l:'×', cls:'op', act:'op', v:'*'},
+    {l:'4', act:'digit'}, {l:'5', act:'digit'}, {l:'6', act:'digit'}, {l:'−', cls:'op', act:'op', v:'-'},
+    {l:'1', act:'digit'}, {l:'2', act:'digit'}, {l:'3', act:'digit'}, {l:'+', cls:'op', act:'op', v:'+'},
+    {l:'≪', cls:'fn', act:'bit', v:'shl'}, {l:'0', act:'digit'}, {l:'≫', cls:'fn', act:'bit', v:'shr'}, {l:'=', cls:'eq glow-pulse', act:'equals'}
+  ];
+
+  function renderPad(){
+    pad.className = 'pad' + (state.mode === 'sci' ? ' sci' : state.mode === 'prog' ? ' prog' : '');
+    let keys = state.mode === 'basic' ? basicKeys : state.mode === 'sci' ? sciKeys : progKeys;
+    pad.innerHTML = '';
+    keys.forEach(k => {
+      const b = document.createElement('button');
+      b.textContent = k.l;
+      if (k.cls) b.className = k.cls;
+      if (k.id) b.id = k.id;
+      if (k.hexonly) {
+        b.disabled = state.programBase < 16 && !(state.programBase===16);
+        if (state.programBase !== 16) b.style.opacity = '0.35';
+      }
+      b.addEventListener('click', () => handleAction(k));
+      pad.appendChild(b);
+    });
+    baseRow.style.display = state.mode === 'prog' ? 'flex' : 'none';
+    document.getElementById('memRow').style.display = state.mode === 'prog' ? 'none' : 'grid';
+  }
+
+  // ---------- Core actions ----------
+  function handleAction(k){
+    switch(k.act){
+      case 'digit': appendChar(k.l); break;
+      case 'char': appendChar(k.v); break;
+      case 'op': appendChar(k.v === '%' ? '%' : k.v); break;
+      case 'clear': state.expr=''; updateDisplay(); break;
+      case 'back': state.expr = state.expr.slice(0,-1); updateDisplay(); break;
+      case 'negate': negate(); break;
+      case 'parens': smartParen(); break;
+      case 'fn': appendFn(k.v); break;
+      case 'equals': evaluate(); break;
+      case 'angle': toggleAngle(k); break;
+      case 'ans': appendChar(String(lastAnswer)); break;
+      case 'base': setBase(k.v); break;
+      case 'bit': applyBitOp(k.v); break;
+      case 'mem': break;
+    }
+  }
+
+  function appendChar(c){ state.expr += c; updateDisplay(); }
+
+  function negate(){
+    // wrap current trailing number in parentheses with unary minus
+    const m = state.expr.match(/(-?\d+\.?\d*)$/);
+    if (m) {
+      const num = m[1];
+      const start = state.expr.length - num.length;
+      const negged = num.startsWith('-') ? num.slice(1) : '-' + num;
+      state.expr = state.expr.slice(0,start) + negged;
+    } else if (state.expr === '') {
+      state.expr = '-';
+    }
+    updateDisplay();
+  }
+
+  function smartParen(){
+    const open = (state.expr.match(/\(/g)||[]).length;
+    const close = (state.expr.match(/\)/g)||[]).length;
+    state.expr += (open > close && /[\d)]$/.test(state.expr)) ? ')' : '(';
+    updateDisplay();
+  }
+
+  function appendFn(name){
+    const map = {sin:'sin(', cos:'cos(', tan:'tan(', ln:'log(', log:'log10(', sqrt:'sqrt(', fact:'!'};
+    if (name === 'fact') { state.expr += '!'; }
+    else state.expr += map[name];
+    updateDisplay();
+  }
+
+  function toggleAngle(k){
+    state.angleUnit = state.angleUnit === 'rad' ? 'deg' : 'rad';
+    document.getElementById('angleBtn').textContent = state.angleUnit.toUpperCase();
+  }
+
+  let lastAnswer = 0;
+
+  function factorial(n){
+    n = Math.round(n);
+    if (n < 0) return NaN;
+    let r = 1; for (let i=2;i<=n;i++) r*=i;
+    return r;
+  }
+
+  function safeEval(expr){
+    let e = expr;
+    e = e.replace(/!/g, ')fact(');
+    // handle factorial by wrapping is tricky; instead do simple postfix pass
+    e = expr; // reset, use regex-based factorial handling below
+    // replace factorial: number followed by !
+    e = e.replace(/(\d+(\.\d+)?)\s*!/g, 'fact($1)');
+    e = e.replace(/pi/g, 'PI').replace(/(?<![a-zA-Z])e(?![a-zA-Z(])/g, 'E');
+    e = e.replace(/\^/g, '**');
+    e = e.replace(/(\d)(\()/g, '$1*$2');
+    e = e.replace(/(\))(\d)/g, '$1*$2');
+    e = e.replace(/%/g, '/100');
+
+    const angle = state.angleUnit;
+    const wrapTrig = (fn) => (x) => angle === 'deg' ? Math[fn](x * Math.PI/180) : Math[fn](x);
+
+    const ctx = {
+      sin: wrapTrig('sin'), cos: wrapTrig('cos'), tan: wrapTrig('tan'),
+      log: Math.log, log10: Math.log10, sqrt: Math.sqrt,
+      fact: factorial, PI: Math.PI, E: Math.E,
+      abs: Math.abs, pow: Math.pow
+    };
+
+    if (!/^[0-9+\-*/%.() a-zA-Z,]*$/.test(e)) throw new Error('bad chars');
+    const allowedNames = Object.keys(ctx).join('|');
+    const stripped = e.replace(new RegExp(allowedNames,'g'),'');
+    if (/[a-zA-Z]/.test(stripped)) throw new Error('unknown token');
+
+    const fn = new Function(...Object.keys(ctx), `"use strict"; return (${e});`);
+    return fn(...Object.values(ctx));
+  }
+
+  function evaluate(){
+    if (!state.expr) return;
+    try {
+      let val;
+      if (state.mode === 'prog') {
+        val = parseInt(state.expr, state.programBase);
+        if (isNaN(val)) throw new Error('bad');
+      } else {
+        val = safeEval(state.expr);
+      }
+      if (typeof val !== 'number' || !isFinite(val)) throw new Error('bad result');
+      const rounded = Math.round(val * 10**state.precision) / 10**state.precision;
+      pushHistory(state.expr, formatResult(rounded));
+      lastAnswer = rounded;
+      state.expr = String(rounded);
+      updateDisplay(true);
+    } catch(err){
+      resultEl.textContent = 'Error';
+      resultEl.classList.add('danger');
+      setTimeout(()=>resultEl.classList.remove('danger'), 700);
+    }
+  }
+
+  function formatResult(v){
+    if (state.mode === 'prog') return v.toString(state.programBase).toUpperCase();
+    return String(v);
+  }
+
+  function setBase(b){
+    state.programBase = b;
+    ['hexBtn','decBtn','octBtn','binBtn'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active-op');
+    });
+    const idMap = {16:'hexBtn',10:'decBtn',8:'octBtn',2:'binBtn'};
+    const el = document.getElementById(idMap[b]);
+    if (el) el.classList.add('active-op');
+    // convert current value
+    try {
+      const currentDec = state.expr ? parseInt(state.expr, state.programBase===b?state.programBase:10) : 0;
+    } catch(e){}
+    renderPad();
+    updateDisplay();
+  }
+
+  function applyBitOp(op){
+    try {
+      const cur = parseInt(state.expr||'0', state.programBase) || 0;
+      if (op === 'not') { state.expr = (~cur >>> 0).toString(state.programBase).toUpperCase(); updateDisplay(); return; }
+      state.pendingBit = {op, left: cur};
+      state.expr = '';
+      updateDisplay();
+      state.awaitingBitRight = true;
+    } catch(e){}
+  }
+
+  function updateDisplay(fromEquals){
+    exprEl.textContent = fromEquals ? '' : state.expr;
+    let disp = state.expr || '0';
+    if (state.mode === 'prog') {
+      const dec = state.expr ? (parseInt(state.expr, state.programBase) || 0) : 0;
+      baseHex.textContent = 'HEX ' + dec.toString(16).toUpperCase();
+      baseDec.textContent = 'DEC ' + dec.toString(10);
+      disp = state.expr || '0';
+    }
+    resultEl.textContent = disp;
+    memFlag.style.visibility = state.hasMemory ? 'visible' : 'hidden';
+  }
+
+  // ---------- Memory ----------
+  document.getElementById('memRow').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.mem;
+    const current = parseFloat(resultEl.textContent) || 0;
+    if (action === 'mc') { state.memory = 0; state.hasMemory = false; }
+    if (action === 'mr') { state.expr = String(state.memory); updateDisplay(); }
+    if (action === 'mplus') { state.memory += current; state.hasMemory = true; }
+    if (action === 'mminus') { state.memory -= current; state.hasMemory = true; }
+    if (action === 'ms') { state.memory = current; state.hasMemory = true; }
+    updateDisplay();
+  });
+
+  // ---------- History ----------
+  function pushHistory(expr, res){
+    state.history.unshift({expr, res, t: Date.now()});
+    if (state.history.length > 200) state.history.pop();
+    renderHistory();
+  }
+  function renderHistory(){
+    if (!state.history.length){
+      historyPanel.innerHTML = '<div class="history-empty">No calculations yet</div>';
+      return;
+    }
+    historyPanel.innerHTML = state.history.map(h =>
+      `<div class="history-item" data-res="${h.res}">
+        <span>${escapeHtml(h.expr)}</span><span>= ${escapeHtml(h.res)}</span>
+      </div>`
+    ).join('');
+    historyPanel.querySelectorAll('.history-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        state.expr = el.dataset.res;
+        updateDisplay();
+      });
+    });
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  document.getElementById('historyBtn').addEventListener('click', ()=>{
+    historyPanel.classList.toggle('show');
+    settingsPanel.classList.remove('show');
+  });
+  document.getElementById('settingsBtn').addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('show');
+    historyPanel.classList.remove('show');
+  });
+
+  // ---------- Modes ----------
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.remove('active'); b.setAttribute('aria-selected','false');});
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      state.mode = btn.dataset.mode;
+      state.expr = '';
+      renderPad();
+      updateDisplay();
+    });
+  });
+
+  // ---------- Theme & effects ----------
+  const themeBtn = document.getElementById('themeBtn');
+  function setTheme(t){
+    app.parentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('#themeRow button').forEach(b=>b.classList.toggle('on', b.dataset.themeChoice===t));
+    themeBtn.textContent = t === 'dark' ? '◐' : '◑';
+  }
+  themeBtn.addEventListener('click', ()=>{
+    const cur = document.body.getAttribute('data-theme') || 'dark';
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+  document.getElementById('themeRow').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    setTheme(b.dataset.themeChoice);
+  });
+
+  const presetRow = document.getElementById('presetRow');
+  const effectsLabel = document.getElementById('effectsLabel');
+  presetRow.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    presetRow.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const preset = b.dataset.preset;
+    effectsLabel.textContent = preset[0].toUpperCase()+preset.slice(1);
+    document.documentElement.style.setProperty('--anim', preset === 'minimal' ? '0' : preset === 'enthusiast' ? '1' : '0.6');
+    document.querySelectorAll('.glow-pulse').forEach(el=>{
+      el.style.animationDuration = preset === 'enthusiast' ? '1s' : preset === 'minimal' ? '0s' : '1.6s';
+    });
+  });
+
+  document.getElementById('reducedMotion').addEventListener('change', e=>{
+    document.body.setAttribute('data-reduced-motion', e.target.checked ? 'true' : 'false');
+  });
+  document.getElementById('precision').addEventListener('input', e=>{
+    state.precision = parseInt(e.target.value,10);
+  });
+
+  document.getElementById('expand').addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('show');
+    historyPanel.classList.remove('show');
+  });
+
+  // ---------- Directional lighting: follow pointer, or gentle auto sweep ----------
+  let sweepT = 0;
+  function autoSweep(){
+    sweepT += 0.004;
+    const x = 50 + Math.sin(sweepT) * 30;
+    const y = 30 + Math.cos(sweepT*0.7) * 15;
+    document.documentElement.style.setProperty('--light-x', x + '%');
+    document.documentElement.style.setProperty('--light-y', y + '%');
+    requestAnimationFrame(autoSweep);
+  }
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    requestAnimationFrame(autoSweep);
+  }
+  app.addEventListener('pointermove', (e)=>{
+    const r = app.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    document.documentElement.style.setProperty('--light-x', x + '%');
+    document.documentElement.style.setProperty('--light-y', y + '%');
+  });
+
+  // ---------- Keyboard support ----------
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key;
+    if (/[0-9]/.test(k)) { appendChar(k); return; }
+    if (state.mode === 'prog' && /[a-fA-F]/.test(k)) { appendChar(k.toUpperCase()); return; }
+    if (['+','-','*','/','.','(',')','%'].includes(k)) { appendChar(k); return; }
+    if (k === 'Enter' || k === '=') { e.preventDefault(); evaluate(); return; }
+    if (k === 'Backspace') { state.expr = state.expr.slice(0,-1); updateDisplay(); return; }
+    if (k === 'Escape') { state.expr=''; updateDisplay(); return; }
+  });
+
+  // ---------- Init ----------
+  setTheme('dark');
+  renderPad();
+  updateDisplay();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
